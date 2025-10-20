@@ -4,5 +4,5 @@ export const createUser = joi.object({
     nombre: joi.string().required(),
     email: joi.string().required(),
     password: joi.string().required(),
-    rol: joi.string().valid('alumno', 'profesor').required()
+    rol: joi.string().valid('alumno', 'profesor')
 });
