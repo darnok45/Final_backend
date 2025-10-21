@@ -95,7 +95,7 @@ const login = async (req = request, res = response) => {
 
 const findAllProfesor = async (req = request, res = response) => {
     const users = await repo.find({
-        where:{
+        where: {
             rol: 'profesor'
         }
     });
@@ -105,10 +105,34 @@ const findAllProfesor = async (req = request, res = response) => {
     res.status(200).json({ ok: true, message: 'Approved', data: users })
 }
 
+const findOneProfesor = async (req = request, res = response) => {
+    const idParam = req.params.id;
+
+    try {
+        const user = await repo.find({
+            where: {
+                id: idParam,
+                rol: 'profesor'
+            }
+        })
+
+        if (!user) {
+            return res.status(404).json({ ok: false, msg: "Profesor no encontrado" });
+        }
+
+        return res.status(200).json({ ok: true, message: 'Approved', data: user })
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ ok: false, error, msg: 'Server error' })
+    }
+}
+
 export const userController = {
     register,
     register_alumno,
     register_profesor,
     login,
-    findAllProfesor
+    findAllProfesor,
+    findOneProfesor
 }
