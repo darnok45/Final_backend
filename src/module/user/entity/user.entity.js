@@ -1,4 +1,4 @@
-import { EntitySchema } from "typeorm";
+import { EntitySchema, JoinColumn } from "typeorm";
 
 export const UserEntity = new EntitySchema({
     name: "User",
@@ -18,13 +18,23 @@ export const UserEntity = new EntitySchema({
             nullable: false,
             unique: true
         },
-        rol: {
-            type: "varchar",
-            nullable: false
-        }, // "alumno" o "profesor"
         password: {
             type: "varchar",
             nullable: false
+        }
+    },
+    relations: {
+        profesor: {
+            target: "Profesor",
+            type: "one-to-one",
+            inverseSide: "usuario",
+            JoinColumn: true
+        },
+        alumno: {
+            target: "Alumno",
+            type: "one-to-one",
+            inverseSide: "usuario",
+            JoinColumn: true
         }
     }
 });

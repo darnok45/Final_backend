@@ -1,4 +1,4 @@
-import { AppDataSource } from '../../configuration/orm.config.js';
+/* import { AppDataSource } from '../../configuration/orm.config.js';
 import { Profesor } from './entity/profesor.entity.js';
 import { Materia } from '../materia/entity/materia.entity.js';
 import { Alumno } from '../alumno/entity/alumno.entity.js';
@@ -46,4 +46,4 @@ export class ProfesorController {
       message: `El alumno ${alumno.nombre} fue matriculado en ${materia.nombre} por el profesor ${profesor.nombre}`,
     });
   }
-}
+} */

@@ -1,23 +1,35 @@
 import { EntitySchema } from 'typeorm';
 
-export const Profesor = new EntitySchema({
-  name: 'Profesor',
-  tableName: 'profesores',
-  columns: {
-    id: {
-      primary: true,
-      type: 'int',
-      generated: true,
+export const ProfesorEntity = new EntitySchema({
+    name: 'Profesor',
+    tableName: 'profesor',
+    columns: {
+        id: {
+            primary: true,
+            type: 'int',
+        },
     },
-    nombre: { type: 'varchar' },
-    apellido: { type: 'varchar' },
-  },
-  relations: {
-    materias: {
-      target: 'Materia',
-      type: 'one-to-many',
-      inverseSide: 'profesor',
-      eager: true,
+    relations: {
+        usuario: {
+            target: 'User',
+            type: 'one-to-one',
+            joinColumn: {
+                name: 'id',
+                referencedColumnName: 'id',
+            },
+            eager: true, 
+        },
+        materiasAsignadas: {
+            target: 'Materia',
+            type: 'one-to-many',
+            inverseSide: 'profesor',
+            eager: false,
+        },
+        tareasAsignadas: {
+            target: 'Tarea',
+            type: 'one-to-many',
+            inverseSide: 'profesor',
+            eager: false,
+        },
     },
-  },
 });
