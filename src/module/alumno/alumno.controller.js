@@ -1,4 +1,4 @@
-/* import { matricularAlumnoDTO } from './schema/alumno.dto.js';
+import { matricularAlumnoDTO } from './schema/alumno.dto.js';
 import { AppDataSource } from '../../configuration/orm.config.js';
 import { Alumno } from './entity/alumno.entity.js';
 import { Materia } from '../materia/entity/materia.entity.js';
@@ -25,4 +25,4 @@ export class AlumnoController {
 
     return res.status(201).json({ message: `Alumno matriculado en ${materia.nombre}` });
   }
-} */
+}
