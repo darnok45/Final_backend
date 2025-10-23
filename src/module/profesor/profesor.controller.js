@@ -1,8 +1,11 @@
 import { request, response } from "express";
-import * as bcrypt from "bcrypt";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { getConnection } from "../../database/database.js";
-import { envs } from "../../configuration/envs.js"; // Asegúrate de tener JWT_SECRET
+import { AppDataSource } from "../../database/data-source.js";
+import { Usuario } from "../../entities/Usuario.js";
+import { Materia } from "../../entities/Materia.js";
+import { Tarea } from "../../entities/Tarea.js";
+import { envs } from "../../configuration/envs.js";
 
 // ========================
 // Registrar profesor
@@ -15,31 +18,29 @@ const register = async (req = request, res = response) => {
       return res.status(400).json({ ok: false, msg: "Faltan datos obligatorios" });
     }
 
-    const connection = await getConnection();
+    const usuarioRepo = AppDataSource.getRepository(Usuario);
 
-    // Verificar si ya existe
-    const [existing] = await connection.query(
-      "SELECT * FROM usuario WHERE username = ?",
-      [username]
-    );
-
-    if (existing.length > 0) {
+    const existing = await usuarioRepo.findOne({ where: { username } });
+    if (existing) {
       return res.status(400).json({ ok: false, msg: "El usuario ya existe" });
     }
 
-    // Hashear contraseña
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Insertar usuario con rol profesor
-    const [result] = await connection.query(
-      "INSERT INTO usuario (username, password, nombre, apellido, rol) VALUES (?, ?, ?, ?, 'profesor')",
-      [username, hashedPassword, nombre, apellido]
-    );
+    const nuevoProfesor = usuarioRepo.create({
+      username,
+      password: hashedPassword,
+      nombre,
+      apellido,
+      rol: "profesor",
+    });
+
+    await usuarioRepo.save(nuevoProfesor);
 
     res.status(201).json({
       ok: true,
       msg: "Profesor registrado correctamente",
-      result,
+      profesor: { id: nuevoProfesor.id, username: nuevoProfesor.username },
     });
   } catch (error) {
     console.error(error);
@@ -54,25 +55,19 @@ const login = async (req = request, res = response) => {
   const { username, password } = req.body;
 
   try {
-    const connection = await getConnection();
-    const [rows] = await connection.query(
-      "SELECT * FROM usuario WHERE username = ? AND rol = 'profesor'",
-      [username]
-    );
+    const usuarioRepo = AppDataSource.getRepository(Usuario);
 
-    const user = rows[0];
+    const user = await usuarioRepo.findOne({ where: { username, rol: "profesor" } });
 
     if (!user) {
       return res.status(404).json({ ok: false, msg: "Usuario no encontrado" });
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
-
     if (!isPasswordValid) {
       return res.status(401).json({ ok: false, msg: "Contraseña incorrecta" });
     }
 
-    // Crear payload y token JWT
     const payload = { id: user.id, username: user.username, rol: user.rol };
     const token = jwt.sign(payload, envs.JWT_SECRET, { expiresIn: "2h" });
 
@@ -80,7 +75,7 @@ const login = async (req = request, res = response) => {
       ok: true,
       msg: "Login exitoso",
       metadata: {
-        user: { ...user, password: "***" },
+        user: { id: user.id, username: user.username, rol: user.rol },
         token,
       },
     });
@@ -97,74 +92,68 @@ const verMaterias = async (req = request, res = response) => {
   const { id } = req.params;
 
   try {
-    const connection = await getConnection();
-    const [result] = await connection.query(
-      "SELECT * FROM materia WHERE profesorID = ?",
-      [id]
-    );
+    const materiaRepo = AppDataSource.getRepository(Materia);
+
+    const materias = await materiaRepo.find({
+      where: { profesor: { id: id } },
+      relations: ["profesor"],
+    });
 
     res.status(200).json({
       ok: true,
       msg: "Materias obtenidas correctamente",
-      materias: result,
+      materias,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      ok: false,
-      msg: "Error al obtener materias del profesor",
-      error,
-    });
+    res.status(500).json({ ok: false, msg: "Error al obtener materias", error });
   }
 };
 
 // ========================
-// Crear tarea de una materia
+// Crear tarea
 // ========================
 const crearTarea = async (req = request, res = response) => {
-  const { id, id2 } = req.params; // id = profesorID, id2 = materiaID
+  const { id, id2 } = req.params; // profesorID y materiaID
   const { titulo, descripcion } = req.body;
 
   try {
-    const connection = await getConnection();
+    const materiaRepo = AppDataSource.getRepository(Materia);
+    const tareaRepo = AppDataSource.getRepository(Tarea);
+    const usuarioRepo = AppDataSource.getRepository(Usuario);
 
-    // Validar que la materia pertenezca al profesor
-    const [materia] = await connection.query(
-      "SELECT * FROM materia WHERE id = ? AND profesorID = ?",
-      [id2, id]
-    );
+    const profesor = await usuarioRepo.findOne({ where: { id, rol: "profesor" } });
+    const materia = await materiaRepo.findOne({
+      where: { id: id2, profesor: { id } },
+    });
 
-    if (materia.length === 0) {
+    if (!materia) {
       return res.status(403).json({
         ok: false,
         msg: "Esa materia no pertenece a este profesor",
       });
     }
 
-    // Crear tarea
-    const [result] = await connection.query(
-      "INSERT INTO tarea (titulo, descripcion, materiaID, profesorID) VALUES (?, ?, ?, ?)",
-      [titulo, descripcion, id2, id]
-    );
+    const nuevaTarea = tareaRepo.create({
+      titulo,
+      descripcion,
+      materia,
+      profesor,
+    });
+
+    await tareaRepo.save(nuevaTarea);
 
     res.status(201).json({
       ok: true,
       msg: "Tarea creada correctamente",
-      idTarea: result.insertId,
+      tarea: nuevaTarea,
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      ok: false,
-      msg: "Error al crear tarea",
-      error,
-    });
+    res.status(500).json({ ok: false, msg: "Error al crear tarea", error });
   }
 };
 
-// ========================
-// Exportar controlador
-// ========================
 export const profesorController = {
   register,
   login,
