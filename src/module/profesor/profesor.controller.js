@@ -47,14 +47,47 @@ const findAll = async (req = request, res = response) => {
       rol: 'Profesor'
     }));
 
-    res.status(201).json({ok: true, data, msg: 'Profesores obtenidos con exito'})
+    res.status(201).json({ ok: true, data, msg: 'Profesores obtenidos con exito' })
   }
   catch (error) {
     res.status(400).json({ ok: false, error, msg: 'Error' });
   }
 }
 
+const findOne = async (req = request, res = response) => {
+  const idParam = req.params.id;
+
+  try {
+    const profesor = await profesorRepo.findOne({
+      where: {
+        id: idParam,
+      },
+      relations: {
+        usuario: true
+      }
+    })
+
+    if (!profesor) {
+      return res.status(404).json({ ok: false, msg: "Profesor no encontrado" });
+    }
+
+    const data = {
+      id: profesor.id,
+      nombre: profesor.usuario.nombre,
+      email: profesor.usuario.email,
+      rol: 'Profesor'
+    };
+
+    return res.status(200).json({ ok: true, message: 'Approved', data: data })
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, error, msg: 'Server error' })
+  }
+}
+
 export const profesorController = {
   create,
-  findAll
+  findAll,
+  findOne
 }

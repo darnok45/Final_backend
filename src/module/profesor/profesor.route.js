@@ -8,10 +8,10 @@ const profesorRoutes = Router();
 
 // Metodos GET
 profesorRoutes.get('/profesor', authMiddleware, profesorController.findAll) // Traer todos los profesores
-
+profesorRoutes.get('/profesor/:id', authMiddleware, profesorController.findOne) // Traer un profesor
 
 
 // Metodos POST
-profesorRoutes.post('/profesor', validate(createProfesor), profesorController.create)
+profesorRoutes.post('/profesor', validate(createProfesor), profesorController.create) // Crear un profesor y su usuario
 
 export default profesorRoutes; 
