@@ -6,6 +6,7 @@ import alumnoRoutes from './module/alumno/alumno.route.js';
 import profesorRoutes from './module/profesor/profesor.route.js';
 import materiaRoutes from './module/materia/materia.route.js';
 import tareaRoutes from './module/tarea/tarea.route.js';
+import entregaRoutes from './module/entrega/entrega.route.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(alumnoRoutes);
 app.use(profesorRoutes);
 app.use(materiaRoutes);
 app.use(tareaRoutes);
+app.use(entregaRoutes);
 
 app.set('port', envs.PORT);
 
