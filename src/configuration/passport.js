@@ -21,6 +21,8 @@ passport.use(
                 return done(null,false);
             }
 
+            user.rol = payload.rol
+
             return done(null, user)
         } catch (err) {
             return done(err, false)

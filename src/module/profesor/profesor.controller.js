@@ -33,6 +33,8 @@ const create = async (req = request, res = response) => {
 
 // Función para ver los profesores
 const findAll = async (req = request, res = response) => {
+  console.log(req.user)
+
   try {
     const profesores = await profesorRepo.find({
       relations: {
@@ -56,6 +58,8 @@ const findAll = async (req = request, res = response) => {
 
 const findOne = async (req = request, res = response) => {
   const idParam = req.params.id;
+
+  console.log(req.user)
 
   try {
     const profesor = await profesorRepo.findOne({

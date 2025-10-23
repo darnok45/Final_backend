@@ -11,27 +11,33 @@ const login = async (req = request, res = response) => {
 
     try {
         // Cargar el usuario Y sus relaciones de roles
-        const user = await repo.findOne({ 
+        const user = await repo.findOne({
             where: { email },
-            relations: { profesor: true, alumno: true } // Cargar ambas relaciones
+            relations: { profesor: true, alumno: true }
         });
+
+        if (!user) {
+            return res.status(404).json('Usuario no encontrado')
+        }
 
         // Acá comparamos la contraseña no hasheada con la que esta almacenada en la base de datos:
         const isPassword = await bcrypt.compare(password, user.password);
 
         if (!isPassword) {
-            res.status(401).json('Wrong password');
+            res.status(401).json('El usuario o la contraseña son incorrectos');
             return;
         }
 
-        let rol = 'admin';
+        let rol
         if (user.profesor) {
             rol = 'profesor';
         } else if (user.alumno) {
             rol = 'alumno';
         }
 
-        const payload = { id: user.id, nombre: user.nombre, rol }; 
+        console.log(rol)
+
+        const payload = { id: user.id, nombre: user.nombre, rol: rol };
 
         const token = jwt.sign(payload, envs.JWT_SECRET, { expiresIn: '1h' });
 

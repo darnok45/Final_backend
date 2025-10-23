@@ -7,6 +7,8 @@ const materiaRepo = AppDatasource.getRepository('Materia')
 const create = async (req = request, res = response) => {
     const { nombre, profesor_id } = req.body;
 
+    console.log(req.user)
+
     try {
         const materia = {
             nombre: nombre,

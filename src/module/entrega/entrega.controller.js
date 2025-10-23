@@ -7,6 +7,8 @@ const create = async (req = request, res = response) => {
     const { tarea_id } = req.body;
     const alumno_id = req.params.id;
 
+    console.log(req.user)
+
     try {
         const entrega = {
             tarea: { id: tarea_id },

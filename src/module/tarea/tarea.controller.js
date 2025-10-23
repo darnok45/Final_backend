@@ -8,6 +8,8 @@ const create = async (req = request, res = response) => {
     const materia_id = req.params.id2;
     const { titulo, descripcion, fechaEntrega } = req.body;
 
+    console.log(req.user)
+
     try {
         const tarea = {
             titulo: titulo,
