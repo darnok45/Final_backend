@@ -1,28 +1,35 @@
-import { matricularAlumnoDTO } from './schema/alumno.dto.js';
-import { AppDataSource } from '../../configuration/orm.config.js';
-import { Alumno } from './entity/alumno.entity.js';
-import { Materia } from '../materia/entity/materia.entity.js';
+import { request, response } from "express";
+import AppDatasource from '../../providers/data.source.js';
+import * as bcrypt from 'bcrypt';
 
-export class AlumnoController {
-  async matricularAlumno(req, res) {
-    const { error, value } = matricularAlumnoDTO.validate(req.body);
-    if (error) return res.status(400).json({ error: error.message });
+const userRepo = AppDatasource.getRepository('User')
+const alumnoRepo = AppDatasource.getRepository('Alumno');
 
-    const { alumnoId, materiaId } = value;
+const create = async (req = request, res = response) => {
+  const { nombre, email, password } = req.body;
 
-    const alumnoRepo = AppDataSource.getRepository('Alumno');
-    const materiaRepo = AppDataSource.getRepository('Materia');
+  try {
+    const hashPassword = await bcrypt.hash(password, 12);
 
-    const alumno = await alumnoRepo.findOne({ where: { id: alumnoId }, relations: ['materias'] });
-    const materia = await materiaRepo.findOne({ where: { id: materiaId } });
+    const newUser = await userRepo.save({ nombre, email, password: hashPassword });
 
-    if (!alumno || !materia) {
-      return res.status(404).json({ message: 'Alumno o materia no encontrada' });
-    }
+    const newAlumno = await alumnoRepo.save({ id: newUser.id });
 
-    alumno.materias.push(materia);
-    await alumnoRepo.save(alumno);
-
-    return res.status(201).json({ message: `Alumno matriculado en ${materia.nombre}` });
+    res.status(201).json({
+      ok: true,
+      msg: 'Alumno creado con exito',
+      data: {
+        id: newAlumno.id,
+        nombre: newUser.nombre,
+        email: newUser.email
+      }
+    });
   }
+  catch (error) {
+    res.status(400).json({ ok: false, error, msg: 'Error' })
+  }
+}
+
+export const alumnoController = {
+  create
 }
