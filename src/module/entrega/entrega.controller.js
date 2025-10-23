@@ -19,7 +19,7 @@ const create = async (req = request, res = response) => {
 
         res.status(201).json({
             ok: true,
-            msg: 'Tarea creado con exito',
+            msg: 'Tarea entregada con exito',
             newEntrega
         });
     }
