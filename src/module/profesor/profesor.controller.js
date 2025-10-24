@@ -2,9 +2,6 @@ import { request, response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { AppDataSource } from "../../database/data-source.js";
-import { Usuario } from "../../entities/Usuario.js";
-import { Materia } from "../../entities/Materia.js";
-import { Tarea } from "../../entities/Tarea.js";
 import { envs } from "../../configuration/envs.js";
 
 // ========================
