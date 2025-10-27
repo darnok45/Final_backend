@@ -107,8 +107,35 @@ const findOne = async (req = request, res = response) => {
   }
 }
 
+
+// ========================
+// Ver materias del profesor
+// ========================
+const verMaterias = async (req = request, res = response) => {
+  const { id } = req.params;
+
+  try {
+    const materiaRepo = AppDataSource.getRepository(Materia);
+
+    const materias = await materiaRepo.find({
+      where: { profesor: { id: id } },
+      relations: ["profesor"],
+    });
+
+    res.status(200).json({
+      ok: true,
+      msg: "Materias obtenidas correctamente",
+      materias,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, msg: "Error al obtener materias", error });
+  }
+};
+
 export const profesorController = {
   create,
   findAll,
-  findOne
+  findOne,
+  verMaterias
 }
