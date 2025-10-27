@@ -12,47 +12,14 @@ const router = Router();
 /* ======================================================
    RUTAS DE PROFESOR CON VALIDACIÓN Y AUTENTICACIÓN JWT
    ====================================================== */
-
 /**
- * @route POST /profesor/register
- * @desc Registrar nuevo profesor
- * @access Público
- */
-router.post(
-  "/register",
-  [
-    body("username", "El nombre de usuario es obligatorio").trim().notEmpty(),
-    body("password", "La contraseña debe tener al menos 6 caracteres")
-      .isLength({ min: 6 }),
-    body("nombre", "El nombre es obligatorio").optional().trim().escape(),
-    body("apellido", "El apellido es obligatorio").optional().trim().escape(),
-    validarCampos,
-  ],
-  profesorController.register
-);
-
-/**
- * @route POST /profesor/login
- * @desc Iniciar sesión de profesor
- * @access Público
- */
-router.post(
-  "/login",
-  [
-    body("username", "El nombre de usuario es obligatorio").trim().notEmpty(),
-    body("password", "La contraseña es obligatoria").trim().notEmpty(),
-    validarCampos,
-  ],
-  profesorController.login
-);
-
 /**
  * @route GET /profesor/:id/materias
  * @desc Ver materias asignadas al profesor
  * @access Privado
  */
 router.get(
-  "/:id/materias",
+  "/profesor/:id/materias",
   [
     verificarToken,
     param("id", "El ID debe ser numérico").isInt(),
@@ -67,7 +34,7 @@ router.get(
  * @access Privado
  */
 router.post(
-  "/:id/materia/:id2/tarea",
+  "/profesor/:id/materia/:id2/tarea",
   [
     verificarToken,
     param("id", "El ID del profesor debe ser numérico").isInt(),
