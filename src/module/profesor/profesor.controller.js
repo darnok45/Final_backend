@@ -1,86 +1,112 @@
 import { request, response } from "express";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { AppDataSource } from "../../database/data-source.js";
-import { envs } from "../../configuration/envs.js";
+import AppDatasource from '../../providers/data.source.js';
+import * as bcrypt from 'bcrypt';
 
-// ========================
-// Registrar profesor
-// ========================
-const register = async (req = request, res = response) => {
-  const { username, password, nombre, apellido } = req.body;
+// Repositorio de User y Profesor
+const userRepo = AppDatasource.getRepository('User');
+const profesorRepo = AppDatasource.getRepository('Profesor');
+
+// Función para crear un profesor y su usuario
+const create = async (req = request, res = response) => {
+  const { nombre, email, password } = req.body; // Datos recibidos en el body
 
   try {
-    if (!username || !password) {
-      return res.status(400).json({ ok: false, msg: "Faltan datos obligatorios" });
-    }
+    // Hasheo de contraseña antes de guardar en la base de datos
+    const hashPassword = await bcrypt.hash(password, 12);
 
-    const usuarioRepo = AppDataSource.getRepository(Usuario);
+    // Crea el usuario en la BD
+    const newUser = await userRepo.save({ nombre, email, password: hashPassword });
 
-    const existing = await usuarioRepo.findOne({ where: { username } });
-    if (existing) {
-      return res.status(400).json({ ok: false, msg: "El usuario ya existe" });
-    }
+    // Crea el profesor con la relación al usuario recien creado
+    const newProfesor = await profesorRepo.save({ id: newUser.id });
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    const nuevoProfesor = usuarioRepo.create({
-      username,
-      password: hashedPassword,
-      nombre,
-      apellido,
-      rol: "profesor",
-    });
-
-    await usuarioRepo.save(nuevoProfesor);
-
+    // Si todo sale bien devuelve 201 
     res.status(201).json({
       ok: true,
-      msg: "Profesor registrado correctamente",
-      profesor: { id: nuevoProfesor.id, username: nuevoProfesor.username },
+      msg: 'Profesor creado con exito',
+      data: {
+        id: newProfesor.id,
+        nombre: newUser.nombre,
+        email: newUser.email
+      }
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ ok: false, msg: "Error al registrar profesor", error });
   }
-};
+  catch (error) {
+    // Si falla devuelve status 400
+    res.status(400).json({ ok: false, error, msg: 'Error' });
+  }
+}
 
-// ========================
-// Login profesor
-// ========================
-const login = async (req = request, res = response) => {
-  const { username, password } = req.body;
+// Función para ver los profesores
+const findAll = async (req = request, res = response) => {
+  // Información del usuario autenticado
+  console.log(req.user)
 
   try {
-    const usuarioRepo = AppDataSource.getRepository(Usuario);
-
-    const user = await usuarioRepo.findOne({ where: { username, rol: "profesor" } });
-
-    if (!user) {
-      return res.status(404).json({ ok: false, msg: "Usuario no encontrado" });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ ok: false, msg: "Contraseña incorrecta" });
-    }
-
-    const payload = { id: user.id, username: user.username, rol: user.rol };
-    const token = jwt.sign(payload, envs.JWT_SECRET, { expiresIn: "2h" });
-
-    res.status(200).json({
-      ok: true,
-      msg: "Login exitoso",
-      metadata: {
-        user: { id: user.id, username: user.username, rol: user.rol },
-        token,
-      },
+    // Carga los datos del usuario con relación a la entidad profesor
+    const profesores = await profesorRepo.find({
+      relations: {
+        usuario: true
+      }
     });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ ok: false, msg: "Error en el login", error });
+
+    // Se le da formato a la información
+    const data = profesores.map(p => ({
+      id: p.id,
+      nombre: p.usuario.nombre,
+      email: p.usuario.email,
+      rol: 'Profesor'
+    }));
+
+    // Devuelve 201
+    res.status(201).json({ ok: true, data, msg: 'Profesores obtenidos con exito' })
   }
-};
+  catch (error) {
+    // Si ocurre un error devuelve un status 400
+    res.status(400).json({ ok: false, error, msg: 'Error' });
+  }
+}
+
+// Obtener profesor por ID
+const findOne = async (req = request, res = response) => {
+  const idParam = req.params.id; // Obtenemos el ID por parametro
+
+  console.log(req.user) // Información del usuario autenticado
+
+  try {
+    // Se busca el profesor por su id
+    const profesor = await profesorRepo.findOne({
+      where: {
+        id: idParam,
+      },
+      relations: {
+        usuario: true
+      }
+    })
+
+    // Si no se encuentra el profesor retorna un status 404
+    if (!profesor) {
+      return res.status(404).json({ ok: false, msg: "Profesor no encontrado" });
+    }
+
+    // Se guarda la información del profesor que sera mostrada
+    const data = {
+      id: profesor.id,
+      nombre: profesor.usuario.nombre,
+      email: profesor.usuario.email,
+      rol: 'Profesor'
+    };
+
+    // Devuelve 200 y muestra al profesor
+    return res.status(200).json({ ok: true, message: 'Approved', data: data })
+  }
+  catch (error) {
+    // En caso de error se devuelve el error y un status 500
+    console.error(error);
+    res.status(500).json({ ok: false, error, msg: 'Server error' })
+  }
+}
+
 
 // ========================
 // Ver materias del profesor
@@ -107,53 +133,9 @@ const verMaterias = async (req = request, res = response) => {
   }
 };
 
-// ========================
-// Crear tarea
-// ========================
-const crearTarea = async (req = request, res = response) => {
-  const { id, id2 } = req.params; // profesorID y materiaID
-  const { titulo, descripcion } = req.body;
-
-  try {
-    const materiaRepo = AppDataSource.getRepository(Materia);
-    const tareaRepo = AppDataSource.getRepository(Tarea);
-    const usuarioRepo = AppDataSource.getRepository(Usuario);
-
-    const profesor = await usuarioRepo.findOne({ where: { id, rol: "profesor" } });
-    const materia = await materiaRepo.findOne({
-      where: { id: id2, profesor: { id } },
-    });
-
-    if (!materia) {
-      return res.status(403).json({
-        ok: false,
-        msg: "Esa materia no pertenece a este profesor",
-      });
-    }
-
-    const nuevaTarea = tareaRepo.create({
-      titulo,
-      descripcion,
-      materia,
-      profesor,
-    });
-
-    await tareaRepo.save(nuevaTarea);
-
-    res.status(201).json({
-      ok: true,
-      msg: "Tarea creada correctamente",
-      tarea: nuevaTarea,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ ok: false, msg: "Error al crear tarea", error });
-  }
-};
-
 export const profesorController = {
-  register,
-  login,
-  verMaterias,
-  crearTarea,
-};
+  create,
+  findAll,
+  findOne,
+  verMaterias
+}

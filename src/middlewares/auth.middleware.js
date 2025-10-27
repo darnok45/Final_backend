@@ -1,16 +1,21 @@
-import jwt from "jsonwebtoken";
+import passport from "../configuration/passport.js";
 
-export const verificarToken = (req, res, next) => {
-  const token = req.headers["authorization"];
-  if (!token) {
-    return res.status(403).json({ ok: false, msg: "Token requerido" });
-  }
+// Middleware de autentificación general con Passport y JWT
+function authMiddleware(req,res, next) {
+    /*
+        Utiliza la estrategia 'jwt' definida en la configuracion de passport
+        session: false evita que se creen sesiones, ya que JWT no las necesita
+    */
+    return passport.authenticate('jwt', { session: false }, (err, user) => {
+        // Si hay error o el usuario no existe devuelve 401
+        if (err || !user){
+            return res.status(401).json({message: 'Unauthorized'});
+        }
 
-  try {
-    const decoded = jwt.verify(token.replace("Bearer ", ""), process.env.JWT_SECRET);
-    req.user = decoded; // guarda info del usuario autenticado
-    next();
-  } catch (error) {
-    return res.status(401).json({ ok: false, msg: "Token inválido o expirado" });
-  }
-};
+        // Si el token es valido, guarda los datos del usuario en la request
+        req.user = user;
+        next(); // Continua
+    })(req, res, next);
+}
+
+export default authMiddleware;

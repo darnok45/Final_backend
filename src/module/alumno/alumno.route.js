@@ -1,38 +1,23 @@
-// ======================================================
-// Importación de dependencias principales
-// ======================================================
-import { Router } from "express";
+import { Router } from 'express';
+import { alumnoController } from './alumno.controller.js';
 import { body, param } from "express-validator";
-import { alumnoController } from "./alumno.controller.js";
-import { validarCampos } from "../../middlewares/validator.middleware.js";
-import { verificarToken } from "../../middlewares/auth.middleware.js";
+import { createAlumno } from './schema/alumno.schema.js';
+import { validate } from '../../middlewares/validator.middleware.js';
 
-const router = Router();
+const alumnoRouter = Router();
 
-/* ======================================================
-   RUTAS DE ALUMNO CON VALIDACIÓN Y AUTENTICACIÓN JWT
-   ====================================================== */
-/**
-/**
- * @route GET /alumno
- * @desc Listar todos los alumnos
- * @access Privado (solo autenticados)
- */
-router.get("/alumno", verificarToken, alumnoController.getAll);
+alumnoRouter.post('/alumno', validate(createAlumno), alumnoController.create)
 
-/**
- * @route GET /alumno/:id/tarea
- * @desc Consultar tareas del alumno por su ID
- * @access Privado
- */
-router.get(
+alumnoRouter.get(
   "/alumno/:id/tarea",
   [
-    verificarToken,
+    authMiddleware,
     param("id", "El ID debe ser numérico").isInt(),
-    validarCampos,
+    validate,
   ],
   alumnoController.tarea
 );
 
-export default router;
+alumnoRouter.get("/alumno", authMiddleware, alumnoController.getAll);
+
+export default alumnoRouter;

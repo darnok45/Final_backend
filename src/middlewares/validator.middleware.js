@@ -1,12 +1,10 @@
-import { validationResult } from "express-validator";
+// Middleware genérico para validar el cuerpo de las solicitudes usando un DTO
+export const validate = (dto) => (req, res, next) => {
+    const { error } = dto.validate(req.body);
 
-export const validarCampos = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({
-      ok: false,
-      errores: errors.mapped(),
-    });
-  }
-  next();
+    // Si hay errores en la validación, responde con un status 400 y los detalles de error
+    if (error) return res.status(400).json({ error: error.details });
+
+    // Si es correcto continua
+    next();
 };
