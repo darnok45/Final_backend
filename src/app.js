@@ -1,7 +1,8 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import passport from './configuration/passport.js';
+import { envs } from './configuration/envs.js';
 
 //Importaciones de rutas
 import userRouter from './module/user/user.route.js'
@@ -19,7 +20,6 @@ app.use(cors());
 
 // Middleware para que express interprete JSON en el body de las solicitudes
 app.use(express.json());
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 // Inicializa passport para el majeo de la autentificación
 app.use(passport.initialize())

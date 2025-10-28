@@ -1,26 +1,22 @@
 import { request, response } from "express";
 import jwt from "jsonwebtoken";
-import AppDatasource from '../../providers/data.source.js';
 import * as bcrypt from 'bcrypt';
-import { matricularAlumnoDTO } from './schema/alumno.schema.js'; 
-import { AppDataSource } from "../../database/data-source.js";
-import { Usuario } from "../../entities/Usuario.js";
-import { Tarea } from "../../entities/Tarea.js";
+import AppDatasource from "../../providers/data.source.js";
 import { envs } from "../../configuration/envs.js";
 
 // Repositorio de User y Alumno
 const userRepo = AppDatasource.getRepository('User')
 const alumnoRepo = AppDatasource.getRepository('Alumno');
 const materiaRepo = AppDatasource.getRepository('Materia');
+const tareaRepo = AppDatasource.getRepository('Tarea')
 
 // ========================
 // Obtener todos los alumnos
 // ========================
 const getAll = async (req = request, res = response) => {
   try {
-    const usuarioRepo = AppDataSource.getRepository(Usuario);
 
-    const alumnos = await usuarioRepo.find({
+    const alumnos = await userRepo.find({
       where: { rol: "alumno" },
       select: ["id", "username", "nombre", "apellido", "rol"],
     });
@@ -43,7 +39,6 @@ const tarea = async (req = request, res = response) => {
   const { id } = req.params;
 
   try {
-    const tareaRepo = AppDataSource.getRepository(Tarea);
 
     // Buscar las tareas asociadas al alumno
     const tareas = await tareaRepo.find({
@@ -100,9 +95,6 @@ const create = async (req = request, res = response) => {
 
 // ***** LÓGICA DE MATRICULAR ALUMNO (Anteriormente sin función) *****
 const matricularAlumno = async (req = request, res = response) => {
-    // 1. Validación de DTO
-    const { error, value } = matricularAlumnoDTO.validate(req.body);
-    if (error) return res.status(400).json({ ok: false, msg: error.message });
 
     const { alumnoId, materiaId } = value;
     

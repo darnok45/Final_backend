@@ -1,13 +1,12 @@
 import { request, response } from "express";
 import AppDatasource from '../../providers/data.source.js';
 import * as bcrypt from 'bcrypt';
-import { matricularAlumnoEnMateriaDTO } from './schema/profesor.dto.js';
 
 // Repositorio de User y Profesor
 const userRepo = AppDatasource.getRepository('User');
 const profesorRepo = AppDatasource.getRepository('Profesor');
-const alumnoRepo = AppDataSource.getRepository('Alumno');
-const materiaRepo = AppDataSource.getRepository('Materia');
+const alumnoRepo = AppDatasource.getRepository('Alumno');
+const materiaRepo = AppDatasource.getRepository('Materia');
 
 
 // Función para crear un profesor y su usuario
@@ -179,19 +178,7 @@ res.status(500).json({ ok: false, msg: 'Error en el servidor' });
 const matricularAlumno = async (req = request, res = response) => {
 const { id: profesorId } = req.params;
 
-
-
-
-const { error, value } = matricularAlumnoEnMateriaDTO.validate(req.body);
-if (error) return res.status(400).json({ ok: false, msg: error.message });
-
-
-
-
 const { alumnoId, materiaId } = value;
-
-
-
 
 try {
 const profesor = await profesorRepo.findOne({ where: { id: profesorId }, relations: ['materias'] });
