@@ -7,4 +7,5 @@ export const validate = (dto) => (req, res, next) => {
 
     // Si es correcto continua
     next();
+
 };
