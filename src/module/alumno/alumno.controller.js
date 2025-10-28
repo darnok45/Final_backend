@@ -2,6 +2,7 @@ import { request, response } from "express";
 import jwt from "jsonwebtoken";
 import AppDatasource from '../../providers/data.source.js';
 import * as bcrypt from 'bcrypt';
+import { matricularAlumnoDTO } from './schema/alumno.schema.js'; 
 import { AppDataSource } from "../../database/data-source.js";
 import { Usuario } from "../../entities/Usuario.js";
 import { Tarea } from "../../entities/Tarea.js";
@@ -10,6 +11,7 @@ import { envs } from "../../configuration/envs.js";
 // Repositorio de User y Alumno
 const userRepo = AppDatasource.getRepository('User')
 const alumnoRepo = AppDatasource.getRepository('Alumno');
+const materiaRepo = AppDatasource.getRepository('Materia');
 
 // ========================
 // Obtener todos los alumnos
@@ -95,8 +97,45 @@ const create = async (req = request, res = response) => {
   }
 }
 
+
+// ***** LÓGICA DE MATRICULAR ALUMNO (Anteriormente sin función) *****
+const matricularAlumno = async (req = request, res = response) => {
+    // 1. Validación de DTO
+    const { error, value } = matricularAlumnoDTO.validate(req.body);
+    if (error) return res.status(400).json({ ok: false, msg: error.message });
+
+    const { alumnoId, materiaId } = value;
+    
+    try {
+        // 2. Búsqueda de entidades
+        const alumno = await alumnoRepo.findOne({ where: { id: alumnoId }, relations: ['materias'] });
+        const materia = await materiaRepo.findOne({ where: { id: materiaId } });
+
+        // 3. Validación de existencia
+        if (!alumno || !materia) {
+            return res.status(404).json({ ok: false, msg: 'Alumno o materia no encontrada' });
+        }
+
+        // 4. Lógica de matriculación (TypeORM)
+        alumno.materias.push(materia);
+        await alumnoRepo.save(alumno);
+
+        // 5. Respuesta exitosa
+        res.status(201).json({
+            ok: true,
+            msg: `Alumno matriculado en ${materia.nombre}`,
+        });
+
+    } catch (error) {
+        console.error(error); // Usar 'error' en lugar de 'err'
+        res.status(500).json({ ok: false, msg: 'Error en el servidor' });
+    }
+}
+// ***** FIN DE LÓGICA DE MATRICULAR ALUMNO *****
+
 export const alumnoController = {
   create,
   getAll,
-  tarea
+  tarea,
+  matricularAlumno
 }

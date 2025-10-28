@@ -21,6 +21,7 @@ profesorRoutes.get(
   ],
   profesorController.verMaterias
 );
+profesorRoutes.get('/:id/entregar', authMiddleware, profesorController.verEntregas);
 
 
 // Metodos POST
@@ -38,5 +39,5 @@ profesorRoutes.post(
   ],
   profesorController.crearTarea
 );
-
+profesorRoutes.post('/:id/matricula', authMiddleware, profesorController.matricularAlumno);
 export default profesorRoutes; 
