@@ -1,7 +1,7 @@
 import { EntitySchema } from 'typeorm';
-import { Materia } from '../../materia/entity/materia.entity.js';
+import { MateriaEntity } from '../../materia/entity/materia.entity.js';
 
-export const Alumno = new EntitySchema({
+export const AlumnoEntity = new EntitySchema({
   name: 'Alumno',
   tableName: 'alumnos',
   columns: {

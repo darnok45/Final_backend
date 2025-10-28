@@ -1,16 +1,16 @@
 import { request, response } from 'express';
 import AppDataSource from '../../providers/data.source.js';
-import { Profesor } from './entity/profesor.entity.js';
-import { Alumno } from '../alumno/entity/alumno.entity.js';
-import { Materia } from '../materia/entity/materia.entity.js';
+import { ProfesorEntity } from './entity/profesor.entity.js';
+import { AlumnoEntity } from '../alumno/entity/alumno.entity.js';
+import { MateriaEntity } from '../materia/entity/materia.entity.js';
 import { matricularAlumnoEnMateriaDTO } from './schema/profesor.dto.js';
 
 
 
 
-const profesorRepo = AppDataSource.getRepository(Profesor);
-const alumnoRepo = AppDataSource.getRepository(Alumno);
-const materiaRepo = AppDataSource.getRepository(Materia);
+const profesorRepo = AppDataSource.getRepository(ProfesorEntity);
+const alumnoRepo = AppDataSource.getRepository(AlumnoEntity);
+const materiaRepo = AppDataSource.getRepository(MateriaEntity);
 
 
 
